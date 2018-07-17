@@ -35,18 +35,19 @@ msg = "CircleCI currently supports bitbucket and github only"
 assert vcs_provider in VCS_DICT, msg
 project = project.split(" ")[0]
 fmt = "Attempting to create a CircleCI v2.0 file for {} on {}..."
-print(fmt.format(vcs_provider, project))
+print(fmt.format(project, vcs_provider))
 cmd = "git ls-remote git@{}.com:{}.git {}".format(vcs_provider, project, TEST_BRANCH)
 fmt = "{} branch already exists on remote - please delete it before continuing."
 assert not run_command(cmd), fmt.format(TEST_BRANCH)
+# https://circleci.com/api/v1.1/project/:vcs-type/:username/:project/config-translation
+# ?circle-token="$circle_token"\&branch=circleci-20-test
+query_data = {"branch": TEST_BRANCH, "circle-token": "<circle_token>"}
+print(URL_FMT.format(vcs_provider, project, urlencode(query_data)))
 
 circle_token = input("Paste your CircleCI API token here: ").strip()
 assert len(circle_token) == 40, "Invalid CircleCI API token"
-# https://circleci.com/api/v1.1/project/:vcs-type/:username/:project/tree/:branch
-# ?circle-token="$circle_token"\&branch=circleci-20-test
-query = urlencode({"branch": TEST_BRANCH, "circle-token": circle_token})
-url = URL_FMT.format(vcs_provider, project, query)
-print(url.replace(circle_token, "<circle_token>"))
+query_data["circle-token"] = circle_token
+url = URL_FMT.format(vcs_provider, project, urlencode(query_data))
 try:
     os.mkdir(DEST_DIR)
 except OSError:
