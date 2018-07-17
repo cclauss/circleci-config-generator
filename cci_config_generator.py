@@ -5,14 +5,13 @@
 
 import os
 from subprocess import run
-
-import requests  # python3 -m pip install --upgrade requests
+from urllib.parse import urlencode
 
 DEST_DIR = ".circleci"
 DEST_FILE = "config.yml"
 SRCE_FILE = "circle.yml"
 TEST_BRANCH = "circleci-20-test"
-URL_FMT = "https://circleci.com/api/v1.1/project/{}/{}/config-translation"
+URL_FMT = "https://circleci.com/api/v1.1/project/{}/{}/config-translation?{}"
 VCS_DICT = {"bitbucket": "bb", "github": "gh"}
 
 assert os.path.isfile(SRCE_FILE), "Local file {} not found".format(SRCE_FILE)
@@ -40,13 +39,18 @@ print(fmt.format(vcs_provider, project))
 cmd = "git ls-remote git@{}.com:{}.git {}".format(vcs_provider, project, TEST_BRANCH)
 fmt = "{} branch already exists on remote - please delete it before continuing."
 assert not run_command(cmd), fmt.format(TEST_BRANCH)
-url = URL_FMT.format(vcs_provider, project)
-print("url: {}".format(url))
 
 circle_token = input("Paste your CircleCI API token here: ").strip()
 assert len(circle_token) == 40, "Invalid CircleCI API token"
-
 # https://circleci.com/api/v1.1/project/:vcs-type/:username/:project/tree/:branch
 # ?circle-token="$circle_token"\&branch=circleci-20-test
-
-print(requests.get(url, data={"circle-token": circle_token, "branch": TEST_BRANCH}))
+query = urlencode({"circle-token": circle_token, "branch": TEST_BRANCH})
+url = URL_FMT.format(vcs_provider, project, query)
+print(url.replace(circle_token, "<circle_token>"))
+try:
+    os.mkdir(DEST_DIR)
+except FileExistsError:
+    pass
+with open(dest, 'w'):
+    pass
+print(run_command('curl ' + url))
