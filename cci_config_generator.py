@@ -44,12 +44,12 @@ circle_token = input("Paste your CircleCI API token here: ").strip()
 assert len(circle_token) == 40, "Invalid CircleCI API token"
 # https://circleci.com/api/v1.1/project/:vcs-type/:username/:project/tree/:branch
 # ?circle-token="$circle_token"\&branch=circleci-20-test
-query = urlencode({"circle-token": circle_token, "branch": TEST_BRANCH})
+query = urlencode({"branch": TEST_BRANCH, "circle-token": circle_token})
 url = URL_FMT.format(vcs_provider, project, query)
 print(url.replace(circle_token, "<circle_token>"))
 try:
     os.mkdir(DEST_DIR)
-except FileExistsError:
+except OSError:
     pass
 with open(dest, 'w'):
     pass
