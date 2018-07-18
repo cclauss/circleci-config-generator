@@ -26,7 +26,7 @@ def run_command(cmd):
 print("Gathering info, please wait...")
 git_branches = run_command("git branch -a")
 assert git_branches, "fatal: not a git repository (or any parent directories)"
-# assert TEST_BRANCH in git_branches, '{} git branch not found'.format(TEST_BRANCH)
+assert TEST_BRANCH in git_branches, '{} git branch not found'.format(TEST_BRANCH)
 git_origin = run_command("git remote -v").partition("origin")[-1]
 assert git_origin, 'Unable to find a remote named "origin"'
 vcs_provider, _, project = git_origin.partition("://")[-1].partition(".com/")
@@ -48,10 +48,16 @@ circle_token = input("Paste your CircleCI API token here: ").strip()
 assert len(circle_token) == 40, "Invalid CircleCI API token"
 query_data["circle-token"] = circle_token
 url = URL_FMT.format(vcs_provider, project, urlencode(query_data))
+new_config = run_command('curl -X GET ' + url)
+print(new_config)
 try:
     os.mkdir(DEST_DIR)
 except OSError:
     pass
-with open(dest, 'w'):
-    pass
-print(run_command('curl ' + url))
+with open(dest, "w"):
+    write(new_config)
+print(run_command("git add " + dest))
+msg = "Adding auto-generated CircleCI 2.0 config file"
+print(run("git", "commit", "-m", msg, capture_output=True, text=True).stdout)
+print(run_command("git push origin " + TEST_BRANCH))
+
